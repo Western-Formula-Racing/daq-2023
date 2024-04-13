@@ -65,9 +65,11 @@ TransmitQueueLength=65536
 18. Then:  
     i. reload systemd-networkd with `sudo systemctl restart systemd-networkd`  
     ii. reload systemd-udevd with `sudo systemctl restart systemd-udevd`  
-    iii. enable systemd-networkd with `sudo systemctl enable systemd-networkd`  
-    iv. restart the machine with `sudo shutdown -r now`  
-    v. when you get the command line back, make sure the CAN interfaces are up with a queue length of 65536 by entering `ip addr` and making sure the following is present for the CAN interfaces:  
+    iii. enable systemd-networkd with `sudo systemctl enable systemd-networkd` 
+    iv. disable systemd-networkd-wait-online with `sudo systemctl disable systemd-networkd-wait-online.service`  
+    v. disable NetworkManager-wait-online with `sudo systemctl disable NetworkManager-wait-online.service`
+    vi. restart the machine with `sudo shutdown -r now`  
+    vii. when you get the command line back, make sure the CAN interfaces are up with a queue length of 65536 by entering `ip addr` and making sure the following is present for the CAN interfaces:  
     <img src="https://github.com/Western-Formula-Racing/daq-2023/assets/70295347/86c51b1e-6aad-4d6a-8fe1-c72a1471a31c" width="800">  
 
 19. Install docker engine by following the steps here: https://docs.docker.com/engine/install/debian/ (Raspberry Pi OS 64-bit is Debian-based). I recommend using the [Install using the apt repository](https://docs.docker.com/engine/install/debian/#install-using-the-repository) method. **MAKE SURE TO DO THE [LINUX POSTINSTALL STEP](https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user) WHEN FINISHED!!!**  
@@ -82,8 +84,31 @@ TransmitQueueLength=65536
 
 24. Edit the `.env` file with `nano .env`. Set a password for InfluxDB by setting the `INFLUX_PASSWORD` environment variable, but leave `INFLUX_TOKEN` blank. Save with ctrl+s, and exit with ctrl+x  
 
-25. Compose the docker project: `docker compose up -d`  
+25. Compose the docker project: `docker compose up -d` and verify it works. Then, `docker compose down -v` to compose the project down  
 
-26. On another computer connected to the same network as the Pi (or connected directly with Ethernet), open a web browser, and continue the normal software setup process starting in [Initializing InfluxDB](../README.md#initializing-influxdb)
+26. Create a systemd service file with `sudo nano /etc/systemd/system/daq-2023.service`. In it, place the following contents, and save with ctrl+s, and exit the file with ctrl+x:  
+```
+[Unit]
+Description=Western Formula Racing Data Acquisition System Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/pi/daq-2023/daq-2023
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down -v
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+```  
+
+27. Enable the service with `sudo systemctl enable daq-2023.service`, then reload the systemctl daemon with `sudo systemctl daemon-reload`, then test the service with `sudo systemctl start daq-2023.service` 
+
+28. Restart the Pi to make sure the service starts as expected when the Pi boots with `sudo shutdown -r now`, then, when the command line returns, 
+
+29. On another computer connected to the same network as the Pi (or connected directly with Ethernet), open a web browser, and continue the normal software setup process starting in [Initializing InfluxDB](../README.md#initializing-influxdb)  
 
 If booting with an SSD that does not have its filesystem UUID entered in the fstab configuration, or if no SSD is connected, the Raspberry Pi will still boot properly because of the nofail option we had in the fstab config. The DAQ software will not run, assuming the DAQ software is stored on the SSD. Follow the above steps with your new SSD to get it working properly.
