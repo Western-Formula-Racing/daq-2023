@@ -105,12 +105,12 @@ async def blocking_session_hash_broadcaster() -> None:
 
 # Note: if the physical buses don't produce anything even though they should, add CAN filtering 
 # Start an interface using the socketcan interface, using the can0 physical device at a 500KHz frequency with the above filters
-# bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000) # BMS CAN network bus
-# bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000) # Inverter CAN network bus
+bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000)
 
 # Use the virtual CAN interface in lieu of a physical connection
-bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
-bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
+# bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
+# bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
 
 async def main() -> None:
     reader_bus_one = can.AsyncBufferedReader()
