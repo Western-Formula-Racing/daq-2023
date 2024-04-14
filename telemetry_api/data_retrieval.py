@@ -25,6 +25,9 @@ class InfluxDataRetrieval:
         return f'{device_name}.csv'
 
     def _generateZip(self, title: str, file_names: list[str]) -> str:
+        if title == "no_data":
+            return "no_data.zip"
+            
         with zipfile.ZipFile(f'./static/{title}.zip', 'w') as zf:
             for file_name in file_names:
                 zf.write(f'{file_name}')
@@ -46,7 +49,7 @@ class InfluxDataRetrieval:
         device_signals = self._query_api.query(f'from(bucket: "RaceData") |> range(start: -6h) |> filter(fn: (r) => r.session_hash=="{tag}") |> group(columns: ["_measurement", "_field"])')
         if len(device_signals) < 1:
             # return an empty zip file when no data is present
-            return self._generateZip("no_data", [])
+            return self._generateZip("no_data", []), []
 
         this_device_name = device_signals[0].records[0].get_measurement()
         this_signal_name = ""
