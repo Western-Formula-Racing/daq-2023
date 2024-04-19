@@ -1,6 +1,6 @@
 FROM python:3.9
 
-WORKDIR ~/data_logger
+WORKDIR /home/data_logger
 
 COPY requirements.txt ./
 
