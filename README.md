@@ -169,4 +169,11 @@ Currently, CSVs are the only download method. Motec LD downloads will be added i
 Refer to the document, [VIRTUAL_DATASTREAM_GENERATION.md](./documentation/VIRTUAL_DATASTREAM_GENERATION.md), for information about how to do this.
 
 ### Motec Conversion
-Motec log generator was originally written by stevendaniluk and is available here: https://github.com/stevendaniluk/MotecLogGenerator. 
+Motec log generator was originally written by stevendaniluk and is available here: https://github.com/stevendaniluk/MotecLogGenerator.  
+
+### Swapping DBCs  
+DBCs are easily swappable using the following steps:
+1. SSH into pi as "pi" user  
+2. `cd` to `~/daq-2023/daq-2023`, and downcompose the project with `docker compose down -v`  
+3. Edit (with `nano`), or replace (with SFTP; does not work over direct ethernet connection) DBC files in `~/daq-2023/daq-2023/containerization/volumes/dbc`  
+4. `cd` back to `~/daq-2023/daq-2023`, then recompose the project with `docker compose up -d`
