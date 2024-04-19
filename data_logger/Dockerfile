@@ -1,6 +1,6 @@
 FROM python:3.9
 
-WORKDIR ~/data_logger
+WORKDIR /home/data_logger
 
 COPY requirements.txt ./
 
@@ -12,4 +12,5 @@ RUN pip install -r requirements.txt
 COPY . . 
 
 # Run the application
+# ENTRYPOINT ["tail", "-f", "/dev/null"] 
 ENTRYPOINT ["python3", "canInterface.py"]

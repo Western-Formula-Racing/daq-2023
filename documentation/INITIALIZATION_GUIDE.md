@@ -111,8 +111,10 @@ WantedBy=multi-user.target
 
 <img src="https://github.com/Western-Formula-Racing/daq-2023/assets/70295347/753008ff-53b8-45c2-bcf8-a549bce602d6" width="800">  
 
-29. To make sure a link-local address can be assigned in lieu of DHCP server presence, as in a direct ethernet connection case, enter `sudo nmcli connection modify "Wired connection 1" connection.autoconnect-retries 0`, then restart NetworkManager with `sudo systemctl restart NetworkManager`
+29. To make sure a link-local address can be assigned in lieu of DHCP server presence, as in a direct ethernet connection case, enter `sudo nmcli connection modify "Wired connection 1" connection.autoconnect-retries 0`, then restart NetworkManager with `sudo systemctl restart NetworkManager`  
 
-30. On another computer connected to the same network as the Pi (or connected directly with Ethernet), open a web browser, and continue the normal software setup process starting in [Initializing InfluxDB](../README.md#initializing-influxdb)  
+30. Make sure can-utils is installed with `sudo apt install can-utils`  
+
+31. On another computer connected to the same network as the Pi (or connected directly with Ethernet), open a web browser, and continue the normal software setup process starting in [Initializing InfluxDB](../README.md#initializing-influxdb)  
 
 If booting with an SSD that does not have its filesystem UUID entered in the fstab configuration, or if no SSD is connected, the Raspberry Pi will still boot properly because of the nofail option we had in the fstab config. The DAQ software will not run, assuming the DAQ software is stored on the SSD. Follow the above steps with your new SSD to get it working properly.
