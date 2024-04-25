@@ -5,11 +5,17 @@ from typing import List
 import os
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
+from influxdb_client.client.util.date_utils_pandas import PandasDateTimeHelper
+import influxdb_client.client.util.date_utils as date_utils
+import pandas as pd
 import datetime
 import paho.mqtt.client as mqtt
 from pprint import pprint
 from hashlib import sha256
 from random import randbytes
+
+# nanosecond precision
+date_utils.date_helper = PandasDateTimeHelper()
 
 # influxDb config
 influx_token = os.environ.get('INFLUX_TOKEN')
@@ -50,7 +56,7 @@ for db_name in dbs:
 # Theoretically, this session hash might not generate unique values. That said, I think it's a low enough chance to
 # where that doesn't matter, especially since it's mostly being used just to get the most recent dataset
 session_hash = str(sha256(randbytes(32)).hexdigest())
-print("Sesssion hash: " + session_hash)
+print("Session hash: " + session_hash)
 
 
 # MQTT publisher setup
@@ -80,7 +86,7 @@ def decode_and_broadcast(msg: can.Message) -> None:
     board_name = db.get_message_by_frame_id(msg.arbitration_id).name
     body = { 
         "measurement": board_name,
-        "time": datetime.datetime.utcnow(),
+        "time": pd.Timestamp(msg.timestamp, unit='s'),
         "fields": decoded,
         "tags": {
             "session_hash": session_hash
