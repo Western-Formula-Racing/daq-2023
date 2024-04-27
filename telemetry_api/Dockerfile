@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 5000
 
 # Run the application
-ENTRYPOINT ["gunicorn", "-b", "0.0.0.0:5000", "-w", "4", "app:app"]
+ENTRYPOINT ["gunicorn", "-t", "0", "-b", "0.0.0.0:5000", "-w", "4", "app:app"]

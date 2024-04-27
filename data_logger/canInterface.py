@@ -14,6 +14,12 @@ from pprint import pprint
 from hashlib import sha256
 from random import randbytes
 
+# Generate hash to delineate data recording sessions
+# Theoretically, this session hash might not generate unique values. That said, I think it's a low enough chance to
+# where that doesn't matter, especially since it's mostly being used just to get the most recent dataset
+session_hash = str(sha256(randbytes(32)).hexdigest())
+print("Session hash: " + session_hash)
+
 # nanosecond precision
 date_utils.date_helper = PandasDateTimeHelper()
 
@@ -25,8 +31,7 @@ influx_url = "http://localhost:8086"
 influx_client = InfluxDBClient(
     url = influx_url, 
     org = influx_org,
-    token = influx_token,
-    debug = True
+    token = influx_token
 )
 influx_write_api = influx_client.write_api(write_options = SYNCHRONOUS)
 
@@ -52,13 +57,6 @@ for db_name in dbs:
         pprint(db.get_message_by_name(message.name).signals)
 
 
-# Generate hash to delineate data recording sessions
-# Theoretically, this session hash might not generate unique values. That said, I think it's a low enough chance to
-# where that doesn't matter, especially since it's mostly being used just to get the most recent dataset
-session_hash = str(sha256(randbytes(32)).hexdigest())
-print("Session hash: " + session_hash)
-
-
 # MQTT publisher setup
 clientName = "daq"
 
@@ -68,7 +66,7 @@ def on_connect(client, userdata, flags, reason_codes, properties):
 
 
 def on_publish(client, userdata, result):
-    print("MQTT data published")
+    #print("MQTT data published")
     pass
 
 
@@ -111,12 +109,12 @@ async def blocking_session_hash_broadcaster() -> None:
 
 # Note: if the physical buses don't produce anything even though they should, add CAN filtering 
 # Start an interface using the socketcan interface, using the can0 physical device at a 500KHz frequency with the above filters
-# bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
-# bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000)
+bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000)
 
 # Use the virtual CAN interface in lieu of a physical connection
-bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
-bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
+# bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
+# bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
 
 async def main() -> None:
     reader_bus_one = can.AsyncBufferedReader()
