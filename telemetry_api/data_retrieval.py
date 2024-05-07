@@ -47,48 +47,12 @@ class InfluxDataRetrieval:
         # because each datapoint represents a segment of a single CAN frame. On that CAN frame, there will always be values
         # for all other signals
         f = open(f'static/data.csv', 'w', newline='')
-        records = self._query_api.query_stream(f'from(bucket: "RaceData") |> range(start: 0, stop: now()) |> filter(fn: (r) => r["session_hash"] == "{tag}") |> group(columns: ["_measurement"]) |> group(columns: ["_field"]) |> group(columns: ["_time"])')
-        current_col = 1
-        row = ""
-        table_no = -1
-        measurement_field_names_to_columns = {}
+        records = self._query_api.query_csv(f'from(bucket: "RaceData") |> range(start: 0, stop: now()) |> filter(fn: (r) => r["session_hash"] == "{tag}") |> group(columns: ["_field"]) |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> sort(columns: ["_time"])',
+            dialect=Dialect(header=True, delimiter=",", annotations=[]))
         for record in records:
-            measurement_field_name = f'{record["_measurement"]}/{record["_field"]}'
-            if table_no != record["table"]: # then we know we are on a new set of signals 
-                if row != "":
-                    f.write(row + "\n")
-                    row = ""
-                table_no = record.table # a "table" is a set of signals from one message
-                row += f'{record["_time"]}' # change this into timestamp
-                if measurement_field_name in measurement_field_names_to_columns:
-                    current_col = 1
-                    row += ',' * measurement_field_names_to_columns[measurement_field_name] # add offset
-                    row += f'{record["_value"]}'
-                    current_col += 1
-                else:
-                    measurement_field_names_to_columns[measurement_field_name] = current_col
-                    row += ',' * current_col # add offset
-                    row += f'{record["_value"]}'
-                    current_col += 1
-            else:
-                if measurement_field_name in measurement_field_names_to_columns:
-                    row += f',{record["_value"]}'
-                else:
-                    measurement_field_names_to_columns[measurement_field_name] = current_col
-                    row += f',{record["_value"]}'
-                current_col += 1
-        
+            f.write(','.join(record[5:]) + "\n")
+
         f.close()
-        
-        # write the header in the beginning with memory mapping to avoid having to copy the entire file contents to memory 
-        with open("static/data.csv", "r+b") as f:
-            header = ("timestamp," + ','.join(list(measurement_field_names_to_columns.keys())) + "\n").encode("ascii")
-            mm = mmap.mmap(f.fileno(), 0)
-            existing = mm[:]
-            mm.resize(len(existing) + len(header))
-            mm[len(header):] = existing
-            mm[:len(header)] = header
-            mm.close()
         return 'data.csv'
 
     def writeAllDataPointsWithTagCSV(self, tag) -> str:
