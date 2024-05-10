@@ -3,6 +3,7 @@ import csv
 import zipfile
 import os
 import mmap
+from datetime import datetime
 
 from motec_conversion.data_log import DataLog
 from motec_conversion.motec_log import MotecLog
@@ -46,14 +47,15 @@ class InfluxDataRetrieval:
         # each MEASUREMENT (i.e., CAN device) will have an equal number of datapoints for all devices (CAN signals), 
         # because each datapoint represents a segment of a single CAN frame. On that CAN frame, there will always be values
         # for all other signals
-        f = open(f'static/data.csv', 'w', newline='')
+        fn = f'static/data-{datetime.now().isoformat()}Z-{tag}.csv'
+        f = open(fn, 'w', newline='')
         records = self._query_api.query_csv(f'from(bucket: "RaceData") |> range(start: 0, stop: now()) |> filter(fn: (r) => r["session_hash"] == "{tag}") |> group(columns: ["_field"]) |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> sort(columns: ["_time"])',
             dialect=Dialect(header=True, delimiter=",", annotations=[]))
         for record in records:
             f.write(','.join(record[5:]) + "\n")
 
         f.close()
-        return 'data.csv'
+        return fn.split("/")[1]
 
     def writeAllDataPointsWithTagCSV(self, tag) -> str:
         name = self._generateAllDataPointsCSV(tag)
