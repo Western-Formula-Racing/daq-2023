@@ -2,22 +2,36 @@ import can
 import cantools
 import asyncio
 from typing import List
+import sys
 import os
 from influxdb_client import InfluxDBClient, Point
 from influxdb_client.client.write_api import SYNCHRONOUS
 from influxdb_client.client.util.date_utils_pandas import PandasDateTimeHelper
 import influxdb_client.client.util.date_utils as date_utils
 import pandas as pd
-import datetime
+from datetime import datetime
 import paho.mqtt.client as mqtt
 from pprint import pprint
 from hashlib import sha256
 from random import randbytes
+import sqlite3
 
-# Generate hash to delineate data recording sessions
-# Theoretically, this session hash might not generate unique values. That said, I think it's a low enough chance to
-# where that doesn't matter, especially since it's mostly being used just to get the most recent dataset
-session_hash = str(sha256(randbytes(32)).hexdigest())
+sqlite_con = sqlite3.connect("sqlite_session_hashes/session_hashes.db") 
+sqlite_cur = sqlite_con.cursor()
+sqlite_ret = sqlite_cur.execute("CREATE TABLE IF NOT EXISTS session_hash(hash, creation_datetime_iso)")
+
+# Generate hash to delineate data recording sessions, making sure value is unique
+while True:
+    global session_hash
+    session_hash = str(sha256(randbytes(32)).hexdigest())
+    sqlite_ret = sqlite_cur.execute("SELECT * FROM session_hash WHERE hash = ?", (session_hash,))
+    if sqlite_ret.fetchone() is None:
+        break
+
+sqlite_ret = sqlite_cur.execute("INSERT INTO session_hash VALUES (?, ?)", (session_hash, datetime.now().isoformat(),))
+sqlite_con.commit()
+sqlite_con.close()
+
 print("Session hash: " + session_hash)
 
 # nanosecond precision
@@ -56,6 +70,8 @@ for db_name in dbs:
         print(f"{message.name} signals:")
         pprint(db.get_message_by_name(message.name).signals)
 
+# Flush stdout buffer to print the debug messages 
+sys.stdout.flush() 
 
 # MQTT publisher setup
 clientName = "daq"
@@ -109,12 +125,12 @@ async def blocking_session_hash_broadcaster() -> None:
 
 # Note: if the physical buses don't produce anything even though they should, add CAN filtering 
 # Start an interface using the socketcan interface, using the can0 physical device at a 500KHz frequency with the above filters
-bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
-bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000)
+# bus_one = can.interface.Bus(bustype='socketcan', channel='can0', bitrate=500000)
+# bus_two = can.interface.Bus(bustype='socketcan', channel='can1', bitrate=500000)
 
 # Use the virtual CAN interface in lieu of a physical connection
-# bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
-# bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
+bus_one = can.interface.Bus(bustype="socketcan", channel="vcan0")
+bus_two = can.interface.Bus(bustype="socketcan", channel="vcan1")
 
 async def main() -> None:
     reader_bus_one = can.AsyncBufferedReader()

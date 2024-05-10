@@ -42,11 +42,13 @@ services:
       - influxdb
     volumes:
       - ./containerization/volumes/dbc:/home/data_logger/dbc
+      - ./containerization/volumes/sqlite_session_hashes:/home/data_logger/sqlite_session_hashes
   telemetry_api:
     build:
       context: ./telemetry_api
     volumes:
       - ./containerization/volumes/static:/home/telemetry_api/static
+      - ./containerization/volumes/sqlite_session_hashes:/home/telemetry_api/sqlite_session_hashes
     depends_on:
       - data_logger
     env_file: .env
