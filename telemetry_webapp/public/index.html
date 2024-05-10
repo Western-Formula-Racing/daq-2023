@@ -41,15 +41,21 @@
         <section>
             <header>
                 <h2>Data Egress</h2>
-                <p class="notice"><b>Only data from the current session is downloaded.</b> A session starts when the DAQ
-                    starts. InfluxDB allows older data downloads, but it is assumed that Motec files or CSVs of past
-                    sessions have already been downloaded.</p>
             </header>
+            <div class="notice">
+                <b>Select session hash:</b>
+                <p>
+                    <select id="session_hash_select" onchange="sessionHashDisplayUpdate()">
+                        <option>REFRESH UNTIL SESSION HASH POPULATES</option>
+                    </select>
+                </p>
+                <p id="session_hash_selected_display">Selected hash: </p>
+            </div>
             <p>
                 <input type="button" value="Download CSV" onclick="download('csv')" />
                 <input type="button" value="Download Motec LD" onclick="download('motec')" />
-                <dialog id="loading-dialog">
-                    <h1 id="loading-dialog-label">Downloading</h1>
+                <dialog id="loading_dialog">
+                    <h1 id="loading_dialog_label">Downloading</h1>
                 </dialog>
             </p>
         </section>
@@ -90,7 +96,7 @@
         </section>
     </main>
     <footer>
-        <span id="session_hash_span">Session hash: </span>
+        <span id="session_hash_span">Current session hash: </span>
     </footer>
     <script src="./index.js"></script>
 </body>
